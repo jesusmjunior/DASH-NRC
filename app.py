@@ -1,19 +1,46 @@
-# ==============================
-# 📦 DASHBOARD PROVIMENTO 07 – CORREGEDORIA NRC 2025
-# ==============================
-
 import streamlit as st
 import pandas as pd
 import altair as alt
 
-# ========== CONFIGURAÇÃO GLOBAL ==========
+# ==============================
+# 🔒 AUTENTICAÇÃO MANUAL BÁSICA
+# ==============================
+def autenticar_usuario():
+    st.sidebar.title("🔐 Autenticação")
+    usuario = st.sidebar.text_input("Usuário")
+    senha = st.sidebar.text_input("Senha", type="password")
+
+    usuarios_validos = {
+        "CGX": "x",
+        "usuario1": "senha1",
+        "usuario2": "senha2",
+        "usuario3": "senha3"
+    }
+
+    if st.sidebar.button("Login"):
+        if usuario in usuarios_validos and senha == usuarios_validos[usuario]:
+            st.session_state["autenticado"] = True
+            st.session_state["usuario"] = usuario
+            st.experimental_rerun()
+        else:
+            st.sidebar.error("Usuário ou senha incorretos.")
+
+if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
+    autenticar_usuario()
+    st.stop()
+
+# ==============================
+# 🌎 CONFIGURAÇÃO GLOBAL
+# ==============================
 st.set_page_config(
     page_title="📊 Registro Civil - NRC 2025",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# ========== CABEÇALHO ==========
+# ==============================
+# 📅 CABEÇALHO
+# ==============================
 col1, col2 = st.columns([6, 1])
 with col1:
     st.title("📊 Relatório Registro Civil – Unidade Interligada PROV 07")
@@ -21,11 +48,15 @@ with col1:
 with col2:
     st.image("https://raw.githubusercontent.com/jesusmjunior/dashboard-registro-civil-prov07/main/CGX.png", width=120)
 
-# ========== AVISO ==========
+# ==============================
+# ⚠️ AVISO IMPORTANTE
+# ==============================
 st.warning("🚨 UNIDADE INTERLIGADA! Preencha os dados do Provimento 07/2021.", icon="⚠️")
 st.markdown("[📝 Acessar Formulário Obrigatório](https://forms.gle/vETZAjAStN3F9YHx9)")
 
-# ========== EXPANDER - SOBRE ==========
+# ==============================
+# ℹ️ EXPLICADOR
+# ==============================
 with st.expander("ℹ️ Sobre o Provimento 07/2021"):
     st.markdown("""
     A instalação de unidades interligadas em hospitais é obrigatória. Os registros devem ser enviados mensalmente até o dia 10 via [Formulário Online](https://forms.gle/vETZAjAStN3F9YHx9).
@@ -34,7 +65,9 @@ with st.expander("ℹ️ Sobre o Provimento 07/2021"):
     *Corregedor-Geral da Justiça (Biênio 2024-2026)*
     """)
 
-# ========== CONFIGURAR LINKS DAS PLANILHAS ==========
+# ==============================
+# 🔗 LINKS DAS PLANILHAS
+# ==============================
 sheet_ids = {
     "base": "1k_aWceBCN_V0VaRJa1Jw42t6hfrER4T4bE2fS88mLDI",
     "subregistro": "1UD1B9_5_zwd_QD0drE1fo3AokpE6EDnYTCwywrGkD-Y",
@@ -57,25 +90,30 @@ sheet_urls = {
     "ANÁLISE DE STATUS": build_url(sheet_ids["base"], "Respostas ao formulário 2")
 }
 
-# ========== CACHE DE CARREGAMENTO ==========
+# ==============================
+# 🔄 CACHE DE CARREGAMENTO
+# ==============================
 @st.cache_data(ttl=3600)
 def carregar_planilha(aba):
     df = pd.read_csv(sheet_urls[aba], low_memory=False, dtype=str)
     df = df.loc[:, ~df.columns.str.contains("^Unnamed")]
     return df, "Planilha Pública Online (CSV)"
 
-# ========== SIDEBAR ==========
+# ==============================
+# 📂 SIDEBAR + ABA
+# ==============================
 st.sidebar.header("📂 Selecione os Dados")
 aba_selecionada = st.sidebar.radio("Aba:", list(sheet_urls.keys()))
 
 df, origem = carregar_planilha(aba_selecionada)
 st.caption(f"Fonte dos dados: {origem}")
 
-# ========== FILTROS ==========
+# ==============================
+# 🔁 FILTROS
+# ==============================
 if aba_selecionada in [
     "CAIXA DE ENTRADA", "FILTRADOS", "RECEBIMENTO POR MUNICÍPIO",
-    "STATUS DE RECEBIMENTO", "DADOS ORGANIZADOS", "SUB-REGISTRO", "DADOS COMPLETOS"
-]:
+    "STATUS DE RECEBIMENTO", "DADOS ORGANIZADOS", "SUB-REGISTRO", "DADOS COMPLETOS"]:
     if "MUNICÍPIO" in df.columns:
         municipio = st.sidebar.selectbox("Filtrar por Município:", ["Todos"] + sorted(df["MUNICÍPIO"].dropna().unique()))
         if municipio != "Todos":
@@ -86,7 +124,9 @@ if aba_selecionada in [
         if ano != "Todos":
             df = df[df["Ano"] == ano]
 
-# ========== ANÁLISE DE STATUS ==========
+# ==============================
+# 📊 ANÁLISE DE STATUS
+# ==============================
 if aba_selecionada == "ANÁLISE DE STATUS":
     st.header("📊 Análise de Cumprimento")
 
@@ -121,6 +161,8 @@ if aba_selecionada == "ANÁLISE DE STATUS":
 else:
     st.dataframe(df, height=1000, use_container_width=True)
 
-# ========== DOWNLOAD ==========
+# ==============================
+# 📥 DOWNLOAD DOS DADOS
+# ==============================
 csv_completo = df.to_csv(index=False, encoding="utf-8-sig")
 st.sidebar.download_button("📥 Baixar CSV", data=csv_completo, file_name=f"{aba_selecionada}.csv", mime="text/csv")
