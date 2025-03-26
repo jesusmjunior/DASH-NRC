@@ -40,7 +40,7 @@ st.set_page_config(
 )
 
 # ==============================
-# 🗓️ CABEÇALHO
+# 🖓 CABEÇALHO
 # ==============================
 col1, col2 = st.columns([6, 1])
 with col1:
@@ -72,7 +72,7 @@ with st.expander("ℹ️ Sobre o Provimento 07/2021"):
 sheet_ids = {
     "base": "1k_aWceBCN_V0VaRJa1Jw42t6hfrER4T4bE2fS88mLDI",
     "subregistro": "1UD1B9_5_zwd_QD0drE1fo3AokpE6EDnYTCwywrGkD-Y",
-    "csv_publicado": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRtKiqlosLL5_CJgGom7BlWpFYExhLTQEjQT_Pdgnv3uEYMlWPpsSeaxfjqy0IxTluVlKSpcZ1IoXQY/pub?output=csv"
+    "csv_publicado": "2PACX-1vRtKiqlosLL5_CJgGom7BlWpFYExhLTQEjQT_Pdgnv3uEYMlWPpsSeaxfjqy0IxTluVlKSpcZ1IoXQY"
 }
 
 def build_url(sheet_id, aba):
@@ -88,7 +88,7 @@ sheet_urls = {
     "GRAPH SITE": build_url(sheet_ids["base"], "GRAPH SITE"),
     "DADOS ORGANIZADOS": build_url(sheet_ids["base"], "DADOS ORGANIZADOS"),
     "SUB-REGISTRO": build_url(sheet_ids["subregistro"], "subregistro"),
-    "DADOS COMPLETOS": sheet_ids["csv_publicado"],
+    "DADOS COMPLETOS": f"https://docs.google.com/spreadsheets/d/e/{sheet_ids['csv_publicado']}/pub?output=csv",
     "ANÁLISE DE STATUS": build_url(sheet_ids["base"], "Respostas ao formulário 2")
 }
 
@@ -97,7 +97,8 @@ sheet_urls = {
 # ==============================
 @st.cache_data(ttl=3600)
 def carregar_planilha(aba):
-    df = pd.read_csv(sheet_urls[aba], low_memory=False, dtype=str)
+    url = sheet_urls[aba]
+    df = pd.read_csv(url, low_memory=False, dtype=str)
     df = df.loc[:, ~df.columns.str.contains("^Unnamed")]
     return df, "Planilha Pública Online (CSV)"
 
@@ -157,4 +158,14 @@ if aba_selecionada == "ANÁLISE DE STATUS":
     ).properties(title="Envios por Mês")
     st.altair_chart(chart, use_container_width=True)
 
-    st.subheader(
+    st.subheader("📄 Registros Detalhados")
+    st.dataframe(df_mun, use_container_width=True)
+
+else:
+    st.dataframe(df, height=1000, use_container_width=True)
+
+# ==============================
+# 📅 DOWNLOAD DOS DADOS
+# ==============================
+csv_completo = df.to_csv(index=False, encoding="utf-8-sig")
+st.sidebar.download_button("📅 Baixar CSV", data=csv_completo, file_name=f"{aba_selecionada}.csv", mime="text/csv")
