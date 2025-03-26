@@ -1,9 +1,10 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
+import urllib.parse
 
 # ==============================
-# 🔒 AUTENTICAÇÃO MANUAL BÁSICA
+# 🔐 AUTENTICAÇÃO MANUAL BÁSICA
 # ==============================
 def autenticar_usuario():
     st.sidebar.title("🔐 Autenticação")
@@ -39,7 +40,7 @@ st.set_page_config(
 )
 
 # ==============================
-# 📅 CABEÇALHO
+# 🗓️ CABEÇALHO
 # ==============================
 col1, col2 = st.columns([6, 1])
 with col1:
@@ -75,7 +76,8 @@ sheet_ids = {
 }
 
 def build_url(sheet_id, aba):
-    return f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={aba}"
+    aba_codificada = urllib.parse.quote(aba)
+    return f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={aba_codificada}"
 
 sheet_urls = {
     "CAIXA DE ENTRADA": build_url(sheet_ids["base"], "Respostas ao formulário 2"),
@@ -109,7 +111,7 @@ df, origem = carregar_planilha(aba_selecionada)
 st.caption(f"Fonte dos dados: {origem}")
 
 # ==============================
-# 🔁 FILTROS
+# 🔀 FILTROS
 # ==============================
 if aba_selecionada in [
     "CAIXA DE ENTRADA", "FILTRADOS", "RECEBIMENTO POR MUNICÍPIO",
@@ -155,14 +157,4 @@ if aba_selecionada == "ANÁLISE DE STATUS":
     ).properties(title="Envios por Mês")
     st.altair_chart(chart, use_container_width=True)
 
-    st.subheader("📄 Registros Detalhados")
-    st.dataframe(df_mun, use_container_width=True)
-
-else:
-    st.dataframe(df, height=1000, use_container_width=True)
-
-# ==============================
-# 📥 DOWNLOAD DOS DADOS
-# ==============================
-csv_completo = df.to_csv(index=False, encoding="utf-8-sig")
-st.sidebar.download_button("📥 Baixar CSV", data=csv_completo, file_name=f"{aba_selecionada}.csv", mime="text/csv")
+    st.subheader(
