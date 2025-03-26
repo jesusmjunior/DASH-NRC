@@ -1,17 +1,17 @@
 FROM python:3.10-slim
 
-# Otimização
+# Otimização do ambiente
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 
-# Copiar código
+# Copia todos os arquivos para dentro do container
 COPY . .
 
-# Instalar dependências
+# Instala as dependências listadas
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expor porta do Streamlit
+# Exposição da porta padrão do Streamlit (usada pelo Cloud Run)
 EXPOSE 8080
 
-# Iniciar servidor Streamlit
+# Comando de execução do app
 CMD ["streamlit", "run", "app.py", "--server.port=8080", "--server.address=0.0.0.0"]
